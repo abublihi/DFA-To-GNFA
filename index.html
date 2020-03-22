@@ -4,15 +4,150 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.15/lodash.min.js"></script>
+    <script src="https://d3js.org/d3.v4.js"></script>
+    <script src="https://dagrejs.github.io/project/graphlib-dot/v0.6.3/graphlib-dot.js"></script>
+    <!-- <script src="../dagre-d3.js"></script> -->
+    <script src="./dist/dagre-d3.js"></script>
     <script src="./main.js"></script>
     <title>DFA to GNFA | CSC 502 homework</title>
+    <style>
+        svg {
+          border: 1px solid #999;
+          overflow: hidden;
+          border-radius: 4px;
+        }
+        
+        .node {
+          white-space: nowrap;
+        }
+        
+        .node rect,
+        .node circle,
+        .node ellipse {
+          stroke: #333;
+          fill: #fff;
+          stroke-width: 1.5px;
+        }
+        
+        .cluster rect {
+          stroke: #333;
+          fill: #000;
+          fill-opacity: 0.1;
+          stroke-width: 1.5px;
+        }
+        
+        .edgePath path.path {
+          stroke: #333;
+          stroke-width: 1.5px;
+          fill: none;
+        }
+        </style>
 </head>
 <body>
-    <h1>DFA to GNFA</h1>
+    <div class="container">
+        <h1>DFA to GNFA</h1>
+        <hr>
 
+        <div class="form-group">
+            <label for="dfa">Enter the Json of the DFA</label>
+            <textarea name="dfa" id="dfa" rows="15" class="form-control">
+var dfa =  {
+    "states": ["s1", "s2", "s3", "s4"],
+    "start": "s1",
+    "accept": ["s3", "s4"],
+    "transitions": [
+        {
+            "from": "s1",
+            "to": "s2",
+            "label": "a"
+        },
+        {
+            "from": "s2",
+            "to": "s1",
+            "label": "b"
+        },
+        {
+            "from": "s2",
+            "to": "s1",
+            "label": "a"
+        },
+        {
+            "from": "s2",
+            "to": "s2",
+            "label": "r"
+        },
+        {
+            "from": "s2",
+            "to": "s3",
+            "label": "c"
+        },
+        {
+            "from": "s3",
+            "to": "s4",
+            "label": "d"
+        },
+        {
+            "from": "s4",
+            "to": "s4",
+            "label": "w"
+        },
+    ]
+}
+            </textarea>
+
+        </div>
+        <button onclick="convertToJsonAndParse()" class="btn btn-primary">Convert</button>
+
+
+        <hr>
+
+
+        <!-- <textarea id="inputGraph" rows="40" class="w-100"style="display: block" onKeyUp="tryDraw('svg2', $(this).val());">
+            /* Example */
+            digraph {
+                /* Note: HTML labels do not work in IE, which lacks support for &lt;foreignObject&gt; tags. */
+                node [rx=5 ry=5 labelStyle="font: 300 14px 'Helvetica Neue', Helvetica"]
+                edge [labelStyle="font: 300 14px 'Helvetica Neue', Helvetica"]
+                A [labelType="html"
+                   label="A <span style='font-size:32px'>Big</span> <span style='color:red;'>HTML</span> Source!"];
+                C;
+                E [label="Bold Red Sink" style="fill: #f77; font-weight: bold"];
+                A -> B -&gt; C;
+                B -&gt; D [label="A blue label" labelStyle="fill: #55f; font-weight: bold;"];
+                D -&gt; E [label="A thick red edge" style="stroke: #f77; stroke-width: 2px;" arrowheadStyle="fill: #f77"];
+                C -&gt; E;
+                A -&gt; D [labelType="html" label="A multi-rank <span style='color:blue;'>HTML</span> edge!"];
+            }
+              </textarea> -->
+        <div class="row">
+            <div class="col-md-6 my-5">
+                <h3>DFA</h3>
+                <svg class="w-100" id="svg1" height=600>
+                <g/>
+                </svg>
+            </div>
+            <div class="col-md-6 my-5">
+                <h3>GNFA</h3>
+                <svg class="w-100" id="svg2" height=600>
+                <g/>
+                </svg>
+            </div>
+        </div>
+    </div>
+    <script>
+        function convertToJsonAndParse(){
+            eval($('textarea').val())
+            dfaToGFA(dfa)
+        }
+    </script>
+
+
+  
+    <script src="./graph.js"></script>
+    
 </body>
 </html>

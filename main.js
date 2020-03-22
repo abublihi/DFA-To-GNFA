@@ -53,14 +53,53 @@ function dfaToGFA(dfa)
     var printingGFA = ""
 
     var startState = convertedGFA.start
-    // convertedGFA.start = "qStart"
-    // convertedGFA.states = convertedGFA.states.push('qStart')
 
-    // newTransitions = _.clone(convertedGFA.transitions)
     checkMutipleLables(convertedGFA)
     checkNoArrowBetweenTwoStates(convertedGFA)
+    addNewStartState(convertedGFA)
+    addNewAcceptStates(convertedGFA)
 
-    console.log(convertedGFA.transitions, dfa.transitions)
+    console.log(convertedGFA, dfa)
+}
+
+/**
+ * This function for condition 1
+ * "Add a new start state, with ε arrow to the original start state"
+ * 
+ * @param {object} convertedGFA 
+ */
+function addNewStartState(convertedGFA)
+{
+    var oldStart = convertedGFA.start
+    convertedGFA.start = "qStart"
+    convertedGFA.states.push('qStart')
+    convertedGFA.transitions.push({
+        "from": convertedGFA.start,
+        "to": oldStart,
+        "label": emptyStringSymbol
+    })
+}
+/**
+ * For condition 2
+ * "Add a new accept state, with arrow from each of the original accept state"
+ * 
+ * @param {object} convertedGFA 
+ */
+function addNewAcceptStates(convertedGFA)
+{
+    // add accept state
+    stateName = "qAccept"
+    convertedGFA.states.push(stateName)
+
+    _.forEach(convertedGFA.accept, function(item){
+        convertedGFA.transitions.push({
+            "from": item,
+            "to": stateName,
+            "label": emptyStringSymbol
+        })
+    })
+
+    convertedGFA.accept = [stateName]
 }
 
 /**
